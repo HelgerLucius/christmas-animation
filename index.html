@@ -58,8 +58,21 @@
             color: #fff;
             text-align: center;
             font-size: 14px;
-            opacity: 0.8;
+            opacity: 0.9;
             pointer-events: none;
+            z-index: 10;
+        }
+        
+        .info-title {
+            font-size: 16px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .info-names {
+            font-size: 14px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
         }
         
         @media (max-width: 768px) {
@@ -75,6 +88,14 @@
                 bottom: 20px;
                 font-size: 12px;
             }
+            
+            .info-title {
+                font-size: 14px;
+            }
+            
+            .info-names {
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -86,7 +107,7 @@
             loop 
             muted
             playsinline
-            preload="auto"
+            preload="metadata"
             style="display: block;">
             <source src="christmas_animation_linkedin.mp4" type="video/mp4">
             Je browser ondersteunt het video-element niet.
@@ -94,70 +115,83 @@
     </div>
     
     <div class="info">
-        <div style="font-size: 16px; margin-bottom: 10px;">🎄 Merry Christmas & Happy 2026 🎄</div>
-        <div style="font-size: 14px; font-weight: 300; letter-spacing: 1px;">Lieke & Robert Jan</div>
+        <div class="info-title">🎄 Merry Christmas & Happy 2026 🎄</div>
+        <div class="info-names">Lieke & Robert-Jan</div>
     </div>
     
     <script>
-        const video = document.getElementById('christmasVideo');
-        
-        // Zorg dat video loopt
-        video.loop = true;
-        
-        // Functie om video af te spelen
-        function playVideo() {
-            video.muted = true;  // Muted voor autoplay
-            const playPromise = video.play();
+        document.addEventListener('DOMContentLoaded', function() {
+            const video = document.getElementById('christmasVideo');
             
-            if (playPromise !== undefined) {
-                playPromise
-                    .then(() => {
-                        console.log('✅ Video speelt af (muted)');
-                        // Probeer na 1 seconde geluid in te schakelen
-                        setTimeout(() => {
-                            video.muted = false;
-                            console.log('🔊 Geluid ingeschakeld');
-                        }, 1000);
-                    })
-                    .catch(error => {
-                        console.log('⚠️ Autoplay mislukt:', error);
-                    });
+            if (!video) {
+                console.error('Video element niet gevonden');
+                return;
             }
-        }
-        
-        // Start video zodra pagina geladen is
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', playVideo);
-        } else {
-            playVideo();
-        }
-        
-        // Zorg dat video loopt
-        video.addEventListener('ended', () => {
-            console.log('🔄 Video herstart');
-            video.currentTime = 0;
-            video.play();
-        });
-        
-        // Luister naar gebruikersinteractie
-        document.addEventListener('click', () => {
-            if (video.paused) {
-                video.muted = false;
-                video.play();
+            
+            // Zorg dat video loopt
+            video.loop = true;
+            
+            // Probeer video af te spelen
+            function startPlayback() {
+                console.log('Poging tot afspelen...');
+                video.muted = true;
+                
+                const playPromise = video.play();
+                
+                if (playPromise !== undefined) {
+                    playPromise
+                        .then(() => {
+                            console.log('✅ Video speelt af (muted)');
+                            // Probeer na 2 seconden geluid in te schakelen
+                            setTimeout(() => {
+                                video.muted = false;
+                                console.log('🔊 Geluid ingeschakeld');
+                            }, 2000);
+                        })
+                        .catch(error => {
+                            console.log('⚠️ Autoplay mislukt, probeer opnieuw:', error);
+                            // Probeer opnieuw na 500ms
+                            setTimeout(startPlayback, 500);
+                        });
+                }
             }
-        });
-        
-        document.addEventListener('touchstart', () => {
-            if (video.paused) {
-                video.muted = false;
-                video.play();
+            
+            // Start afspelen zodra metadata geladen is
+            if (video.readyState >= 1) {
+                // Metadata is al geladen
+                startPlayback();
+            } else {
+                video.addEventListener('loadedmetadata', startPlayback, { once: true });
             }
+            
+            // Zorg dat video loopt
+            video.addEventListener('ended', () => {
+                console.log('🔄 Video herstart');
+                video.currentTime = 0;
+                video.play().catch(err => console.log('Fout bij herstarten:', err));
+            });
+            
+            // Luister naar gebruikersinteractie
+            document.addEventListener('click', () => {
+                if (video.paused) {
+                    video.muted = false;
+                    video.play().catch(err => console.log('Fout bij afspelen:', err));
+                }
+            });
+            
+            document.addEventListener('touchstart', () => {
+                if (video.paused) {
+                    video.muted = false;
+                    video.play().catch(err => console.log('Fout bij afspelen:', err));
+                }
+            });
+            
+            // Debug logging
+            video.addEventListener('play', () => console.log('▶️ Video speelt af'));
+            video.addEventListener('pause', () => console.log('⏸️ Video gepauzeerd'));
+            video.addEventListener('loadedmetadata', () => console.log('📹 Metadata geladen'));
+            video.addEventListener('canplay', () => console.log('🎬 Video kan afspelen'));
         });
-        
-        // Debug
-        video.addEventListener('play', () => console.log('▶️ Afspelen'));
-        video.addEventListener('pause', () => console.log('⏸️ Gepauzeerd'));
-        video.addEventListener('loadedmetadata', () => console.log('📹 Video geladen'));
     </script>
 </body>
 </html>
