@@ -105,9 +105,8 @@
             id="christmasVideo"
             autoplay 
             loop 
-            muted
             playsinline
-            preload="metadata"
+            preload="auto"
             style="display: block;">
             <source src="christmas_animation_linkedin.mp4" type="video/mp4">
             Je browser ondersteunt het video-element niet.
@@ -128,40 +127,54 @@
                 return;
             }
             
+            console.log('Video element gevonden, initialiseren...');
+            
             // Zorg dat video loopt
             video.loop = true;
             
-            // Probeer video af te spelen
+            // Probeer video af te spelen MET GELUID
             function startPlayback() {
-                console.log('Poging tot afspelen...');
-                video.muted = true;
+                console.log('Poging tot afspelen met geluid...');
                 
+                // Start ZONDER muted eerst
                 const playPromise = video.play();
                 
                 if (playPromise !== undefined) {
                     playPromise
                         .then(() => {
-                            console.log('✅ Video speelt af (muted)');
-                            // Probeer na 2 seconden geluid in te schakelen
-                            setTimeout(() => {
-                                video.muted = false;
-                                console.log('🔊 Geluid ingeschakeld');
-                            }, 2000);
+                            console.log('✅ Video speelt af MET GELUID');
                         })
                         .catch(error => {
-                            console.log('⚠️ Autoplay mislukt, probeer opnieuw:', error);
-                            // Probeer opnieuw na 500ms
-                            setTimeout(startPlayback, 500);
+                            console.log('⚠️ Autoplay met geluid mislukt, probeer muted:', error);
+                            // Fallback: probeer muted
+                            video.muted = true;
+                            const mutedPlayPromise = video.play();
+                            
+                            if (mutedPlayPromise !== undefined) {
+                                mutedPlayPromise
+                                    .then(() => {
+                                        console.log('✅ Video speelt af (muted)');
+                                        // Probeer na 1 seconde geluid in te schakelen
+                                        setTimeout(() => {
+                                            video.muted = false;
+                                            console.log('🔊 Geluid ingeschakeld');
+                                        }, 1000);
+                                    })
+                                    .catch(err => {
+                                        console.log('❌ Autoplay volledig mislukt:', err);
+                                    });
+                            }
                         });
                 }
             }
             
-            // Start afspelen zodra metadata geladen is
-            if (video.readyState >= 1) {
-                // Metadata is al geladen
-                startPlayback();
+            // Start afspelen zodra pagina volledig geladen is
+            if (document.readyState === 'complete') {
+                setTimeout(startPlayback, 100);
             } else {
-                video.addEventListener('loadedmetadata', startPlayback, { once: true });
+                window.addEventListener('load', () => {
+                    setTimeout(startPlayback, 100);
+                });
             }
             
             // Zorg dat video loopt
@@ -174,6 +187,7 @@
             // Luister naar gebruikersinteractie
             document.addEventListener('click', () => {
                 if (video.paused) {
+                    console.log('Klik gedetecteerd, video afspelen...');
                     video.muted = false;
                     video.play().catch(err => console.log('Fout bij afspelen:', err));
                 }
@@ -181,6 +195,7 @@
             
             document.addEventListener('touchstart', () => {
                 if (video.paused) {
+                    console.log('Touch gedetecteerd, video afspelen...');
                     video.muted = false;
                     video.play().catch(err => console.log('Fout bij afspelen:', err));
                 }
@@ -191,6 +206,7 @@
             video.addEventListener('pause', () => console.log('⏸️ Video gepauzeerd'));
             video.addEventListener('loadedmetadata', () => console.log('📹 Metadata geladen'));
             video.addEventListener('canplay', () => console.log('🎬 Video kan afspelen'));
+            video.addEventListener('volumechange', () => console.log('🔊 Volume veranderd naar:', video.muted ? 'muted' : 'unmuted'));
         });
     </script>
 </body>
